@@ -6,10 +6,58 @@
 
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"runtime"
+	"strings"
+	"sync"
+	"time"
+)
 
 func main() {
-	fmt.Printf("Hello, gopher!")
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("32-BIT MD5 HASH : ")
+	input, _ := reader.ReadString('\n')
+	targetHash := strings.ToLower(strings.TrimSpace(input))
+	if len(targetHash) != 32 {
+		fmt.Println("MD5_ERR")
+		os.Exit(1)
+	}
+
+	targetBytes, err := hex.DecodeString(targetHash)
+	if err != nil || len(targetBytes) != 16 {
+		fmt.Println("INVALID HASH")
+		os.Exit(1)
+	}
+	copy(targetMD5[:], targetBytes)
+
+	start := time.Now()
+	numWorkers := runtime.NumCPU()
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+	for i := 0; i < numWorkers; i++ {
+		go func() {
+			defer wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(foundChan)
+	}()
+
+	if result, ok := <-foundChan; ok {
+		fmt.Printf("MATCH UID FOUND : %d\n", result)
+	} else {
+		fmt.Println("NO MATCH FOUND")
+	}
+	elapsed := time.Since(start)
+	fmt.Printf("TOTAL USED TIME : %.3f\n", elapsed.Seconds())
 }
 
 const (
