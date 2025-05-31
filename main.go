@@ -74,6 +74,19 @@ var (
 	globalIndex uint64
 )
 
+func uitoa(n uint64, buf []byte) []byte {
+	i := len(buf)
+	for n >= 10 {
+		i--
+		q := n / 10
+		buf[i] = byte(n%10) + '0'
+		n = q
+	}
+	i--
+	buf[i] = byte(n) + '0'
+	return buf[i:]
+}
+
 func worker() {
 	var localBuf [20]byte
 	for {
@@ -84,7 +97,7 @@ func worker() {
 		end := atomic.AddUint64(&globalIndex, batchSize)
 
 		for n := start + 1; n <= end; n++ {
-			var digits = 1
+			digits := uitoa(n, localBuf[:])
 			sum := md5.Sum(digits)
 			if sum == targetMD5 {
 				select {
