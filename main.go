@@ -19,6 +19,17 @@ import (
 	"time"
 )
 
+const (
+	batchSize = 10000
+	maxRange  = 1 << 60
+)
+
+var (
+	targetMD5   [16]byte
+	foundChan   = make(chan uint64, 1)
+	globalIndex uint64
+)
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -63,30 +74,6 @@ func main() {
 	fmt.Printf("TOTAL USED TIME : %.3f\n", elapsed.Seconds())
 }
 
-const (
-	batchSize = 10000
-	maxRange  = 1 << 60
-)
-
-var (
-	targetMD5   [16]byte
-	foundChan   = make(chan uint64, 1)
-	globalIndex uint64
-)
-
-func uitoa(n uint64, buf []byte) []byte {
-	i := len(buf)
-	for n >= 10 {
-		i--
-		q := n / 10
-		buf[i] = byte(n%10) + '0'
-		n = q
-	}
-	i--
-	buf[i] = byte(n) + '0'
-	return buf[i:]
-}
-
 func worker() {
 	var localBuf [20]byte
 	for {
@@ -108,4 +95,17 @@ func worker() {
 			}
 		}
 	}
+}
+
+func uitoa(n uint64, buf []byte) []byte {
+	i := len(buf)
+	for n >= 10 {
+		i--
+		q := n / 10
+		buf[i] = byte(n%10) + '0'
+		n = q
+	}
+	i--
+	buf[i] = byte(n) + '0'
+	return buf[i:]
 }
