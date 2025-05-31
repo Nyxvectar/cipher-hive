@@ -8,12 +8,14 @@ package main
 
 import (
 	"bufio"
+	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -43,6 +45,7 @@ func main() {
 	for i := 0; i < numWorkers; i++ {
 		go func() {
 			defer wg.Done()
+			worker()
 		}()
 	}
 
@@ -70,3 +73,26 @@ var (
 	foundChan   = make(chan uint64, 1)
 	globalIndex uint64
 )
+
+func worker() {
+	var localBuf [20]byte
+	for {
+		start := atomic.LoadUint64(&globalIndex)
+		if start+batchSize > maxRange {
+			return
+		}
+		end := atomic.AddUint64(&globalIndex, batchSize)
+
+		for n := start + 1; n <= end; n++ {
+			var digits = 1
+			sum := md5.Sum(digits)
+			if sum == targetMD5 {
+				select {
+				case foundChan <- n:
+				default:
+				}
+				return
+			}
+		}
+	}
+}
