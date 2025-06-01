@@ -32,7 +32,6 @@ var (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("32-BIT MD5 HASH : ")
 	input, _ := reader.ReadString('\n')
@@ -41,14 +40,12 @@ func main() {
 		fmt.Println("MD5_ERR")
 		os.Exit(1)
 	}
-
 	targetBytes, err := hex.DecodeString(targetHash)
 	if err != nil || len(targetBytes) != 16 {
 		fmt.Println("INVALID HASH")
 		os.Exit(1)
 	}
 	copy(targetMD5[:], targetBytes)
-
 	start := time.Now()
 	numWorkers := runtime.NumCPU()
 	var wg sync.WaitGroup
@@ -59,12 +56,10 @@ func main() {
 			worker()
 		}()
 	}
-
 	go func() {
 		wg.Wait()
 		close(foundChan)
 	}()
-
 	if result, ok := <-foundChan; ok {
 		fmt.Printf("MATCH UID FOUND : %d\n", result)
 	} else {
@@ -82,7 +77,6 @@ func worker() {
 			return
 		}
 		end := atomic.AddUint64(&globalIndex, batchSize)
-
 		for n := start + 1; n <= end; n++ {
 			digits := uitoa(n, localBuf[:])
 			sum := md5.Sum(digits)
