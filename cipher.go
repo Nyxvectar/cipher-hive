@@ -7,6 +7,7 @@
 package main
 
 import (
+	"CipherHive/cipheralgo"
 	"bufio"
 	"crypto/md5"
 	"encoding/hex"
@@ -78,7 +79,7 @@ func worker() {
 		}
 		end := atomic.AddUint64(&globalIndex, batchSize)
 		for n := start + 1; n <= end; n++ {
-			digits := uitoa(n, localBuf[:])
+			digits := cipheralgo.Uitoa(n, localBuf[:])
 			sum := md5.Sum(digits)
 			if sum == targetMD5 {
 				select {
@@ -89,17 +90,4 @@ func worker() {
 			}
 		}
 	}
-}
-
-func uitoa(n uint64, buf []byte) []byte {
-	i := len(buf)
-	for n >= 10 {
-		i--
-		q := n / 10
-		buf[i] = byte(n%10) + '0'
-		n = q
-	}
-	i--
-	buf[i] = byte(n) + '0'
-	return buf[i:]
 }
